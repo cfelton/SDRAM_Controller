@@ -1,3 +1,6 @@
+
+from __future__ import print_function
+
 from myhdl import *
 
 commands = enum("COM_INHIBIT","NOP","ACTIVE","READ","WRITE","BURST_TERM", \
@@ -12,18 +15,19 @@ def sdram(sd_intf):
     curr_command = Signal(commands.INVALID)
     control_logic_inst = Control_Logic(curr_command,sd_intf)
 
-    curr_state = [ State(0,sd_intf), State(1,sd_intf), State(2,sd_intf), State(3,sd_intf) ] # Represents the state of eah bank
+    # Represents the state of each bank
+    curr_state = [ State(0,sd_intf), State(1,sd_intf), State(2,sd_intf), State(3,sd_intf) ] 
 
     @always(sd_intf.clk.posedge)
     def function():
         if(sd_intf.cke == 1):
-            print " SDRAM : [COMMAND] ", curr_command
-
+            print(" SDRAM : [COMMAND] ", curr_command)
+    
             for bank_state in curr_state :
                 bank_state.nextState(curr_command)
-
+    
             if(curr_command == commands.INVALID):
-                print " SDRAM : [ERROR] Invalid command is given" 
+                print(" SDRAM : [ERROR] Invalid command is given")
             elif(curr_command == commands.ACTIVE):
                 activate(sd_intf.bs,sd_intf.addr)
             elif(curr_command == commands.READ):
@@ -33,25 +37,33 @@ def sdram(sd_intf):
             elif(curr_command == commands.PRECHARGE):
                 precharge(sd_intf.bs,sd_intf.addr)
 
+    #@instance
+    #def function():   # <-- more descriptive name
+    #    while True:
+    #        yield sd_intf.clk.posedge
+    #
+    #        for bank_state in curr_state:
+    #            bank_state.nextState(curr_command)
+
    
     def activate(bs,addr):
         if(curr_state[bs.val].active_row != None):
-            print " SDRAM : [ERROR] A row is already activated. Bank should be precharged first"
+            print(" SDRAM : [ERROR] A row is already activated. Bank should be precharged first")
             return None
         if(curr_state[bs.val].getState() == states.Uninitialized):
-            print " SDRAM : [ERROR] Bank is not in a good state. Too bad for you"
+            print(" SDRAM : [ERROR] Bank is not in a good state. Too bad for you")
             return None
         curr_state[bs.val].active_row = addr.val
 
     def read(bs,addr):
         if(curr_state[bs.val].active_row == None):
-            print " SDRAM : [ERROR] A row should be activated before trying to read"
+            print(" SDRAM : [ERROR] A row should be activated before trying to read")
         else:
-            print " SDRAM : [READ] Commnad registered " 
+            print(" SDRAM : [READ] Commnad registered ")
 
     def write(bs,addr):
         if(curr_state[bs.val].active_row == None):
-            print " SDRAM : [ERROR] A row should be activated before trying to write"
+            print(" SDRAM : [ERROR] A row should be activated before trying to write")
 
     def precharge(bs,addr):
         if(addr.val[10] == 1):           # Precharge all banks command
@@ -104,6 +116,7 @@ def Control_Logic(curr_command,sd_intf):
     
     return decode
 
+
 class State:
 
     def __init__(self,bank_id,sd_intf,regFile={}):
@@ -122,7 +135,7 @@ class State:
         self.wait = now() - self.init_time
         if(self.state == states.Uninitialized):
             if(self.wait >= self.sd_intf.timing['init']):
-                print " BANK",self.bank_id,"STATE : [CHANGE] Uninitialized -> Initialized @ ", now()
+                print(" BANK",self.bank_id,"STATE : [CHANGE] Uninitialized -> Initialized @ ", now())
                 self.state     = states.Initialized
                 self.init_time = now()
                 #self.driver.next = 45
@@ -149,7 +162,7 @@ class State:
                 self.init_time = now()
                 #if(self.active_row != None):
                 self.driver.next = self.memory[self.active_row * 10000 + self.addr]
-                print " STATE : [READ] Data Ready @ ", now()
+                print(" STATE : [READ] Data Ready @ ", now())
 
         elif(self.state == states.Read_rdy):
                 self.state = states.Idle

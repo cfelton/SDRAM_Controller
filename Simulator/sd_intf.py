@@ -1,5 +1,6 @@
 from myhdl import *
 
+# class names should be capital/camelcase, e.g: SDRAMInterface
 class sd_intf(object):
 
     addr_width = 12
