@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import division
 
 import sys
-sys.path.append('../..')
+print(sys.path)
 import os
 
 from myhdl import *
@@ -37,7 +37,7 @@ def test_readWrite():
             yield sd.nop()
             yield delay(10)
             yield sd.write(20, 31)  # write 31 to address 20?
-            yield delay(10)
+            yield delay(5)
             yield sd.nop()
             yield delay(10)
             yield sd.read(20)       # read address 20 (where does the result go?)
@@ -56,6 +56,7 @@ def test_readWrite():
         
         # return the DUT and stimuls generators
         return test, sdram_Inst, clkDriver_Inst
+
 
     # trace the signals in the testbench and the model for debug
     # and manual verification
